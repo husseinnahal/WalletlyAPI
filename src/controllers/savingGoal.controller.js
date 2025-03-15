@@ -39,7 +39,7 @@ const addgoal = asyncHandler(async (req, res, next) => {
         return next(error);
     }
 
-    let imageUrl = "/public/goal.png"; 
+    let imageUrl = "/public/images/goal.png"; 
     if (req.file) {
         try {
             const result = await uploadFromBuffer(req.file.buffer);
