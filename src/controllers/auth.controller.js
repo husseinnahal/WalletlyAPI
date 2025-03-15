@@ -180,6 +180,25 @@ const updatePassword = asyncHandler(async (req, res, next) => {
     });
 });
 
+const getuser = asyncHandler(async (req, res, next) => {
+    try {
+        const userId = req.decoded.id;
+        const user = await User.findById(userId).select("-password"); 
+        if (!user) {
+            const error = new Error("User not found");
+            error.statusCode = 404;
+            return next(error);
+        }
 
-export { registration,login,editUser,updatePassword };
+        res.status(200).json({
+            status: true,
+            message: "User fetched successfully",
+            data: user,
+        });
+    } catch (error) {
+        next(new Error("Server error, please try again later"));
+    }
+});
+
+export { registration,login,editUser,updatePassword,getuser };
 

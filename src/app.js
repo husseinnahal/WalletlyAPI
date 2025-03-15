@@ -34,8 +34,6 @@ app.use('/api/transaction', Transactions);
 app.use('/api/goals', Goals);
 app.use('/api/debts', Debts);
 
-// for currency 
-// https://v6.exchangerate-api.com/v6/ba58b0d0ceb524b2f919eac6/latest/USD
 
 
 app.all('*', (req, res) => {
@@ -48,3 +46,5 @@ app.all('*', (req, res) => {
 app.use(globalErrorHandler);
 
 export default app;
+
+
