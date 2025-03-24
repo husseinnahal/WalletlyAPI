@@ -39,7 +39,7 @@ const addgoal = asyncHandler(async (req, res, next) => {
         return next(error);
     }
 
-    let imageUrl = "/public/images/goal.png"; 
+    let imageUrl ; 
     if (req.file) {
         try {
             const result = await uploadFromBuffer(req.file.buffer);
@@ -71,6 +71,11 @@ const addgoal = asyncHandler(async (req, res, next) => {
             errors.statusCode = 500;
             return next(errors);
         }
+    }
+    if (amountInUSD<= 0) {
+        const error = new Error("The amount is too small");
+        error.statusCode = 400;
+        return next(error);
     }
 
     const goal = await SavingGoal.create({
@@ -157,7 +162,11 @@ const updateGoals = asyncHandler(async (req, res, next) => {
             return next(errors);
         }
     }
-
+    if (amountInUSD<= 0) {
+        const error = new Error("The amount is too small");
+        error.statusCode = 400;
+        return next(error);
+    }
 
     const updatedgoal = await SavingGoal.findByIdAndUpdate(req.params.id,{ 
         title: title.trim(),
@@ -223,7 +232,11 @@ const addSavedAmount = asyncHandler(async (req, res, next) => {
                 return next(errors);
             }
         }
-
+        if (amountInUSD<= 0) {
+            const error = new Error("The amount is too small");
+            error.statusCode = 400;
+            return next(error);
+        }
 
         // add  new saved amount
         goal.savedAmounts.push({ amount: amountInUSD });
@@ -280,7 +293,11 @@ const updateSavedAmount = asyncHandler(async (req, res, next) => {
             return next(errors);
         }
     }
-
+    if (amountInUSD<= 0) {
+        const error = new Error("The amount is too small");
+        error.statusCode = 400;
+        return next(error);
+    }
     // Calculate the difference to update total correctly
     const difference = amountInUSD - savedAmount.amount;
 

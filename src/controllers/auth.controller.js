@@ -77,8 +77,10 @@ const login = asyncHandler(async (req, res, next) => {
         return next(error);
     }
 
-    if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS && user.lockUntil > Date.now()) {
-        const error = new Error("Too many failed. Try again later.");
+    // Check if the user is locked out
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+        const remainingTime = Math.ceil((user.lockUntil - Date.now()) / 60000);
+        const error = new Error(`Too many failed attempts. Try again in ${remainingTime} minutes`);
         error.statusCode = 403;
         return next(error);
     }
@@ -86,11 +88,12 @@ const login = asyncHandler(async (req, res, next) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
         user.failedLoginAttempts += 1;
+
         if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
             user.lockUntil = Date.now() + LOCK_TIME;
         }
-        await user.save();
 
+        await user.save();
         const error = new Error("Invalid credentials");
         error.statusCode = 400;
         return next(error);
@@ -108,6 +111,7 @@ const login = asyncHandler(async (req, res, next) => {
         token
     });
 });
+
 
 
 

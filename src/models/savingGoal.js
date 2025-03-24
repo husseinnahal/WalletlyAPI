@@ -16,7 +16,6 @@ const SavingGoalSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      default: "/public/goal.png"
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,

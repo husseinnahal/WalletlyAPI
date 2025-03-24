@@ -40,7 +40,11 @@ const addTransaction = asyncHandler(async (req, res, next) => {
             return next(errors);
         }
     }
-
+    if (Number(amountInUSD) <= 0) {
+        const error = new Error("The amount is too small");
+        error.statusCode = 400;
+        return next(error);
+    }
     const newTransaction = await Transactions.create({
         title: title.trim(),
         amount: amountInUSD,
@@ -156,6 +160,11 @@ const editTransaction = asyncHandler(async (req, res, next) => {
             errors.statusCode = 500;
             return next(errors);
         }
+    }
+    if (Number(amountInUSD) <= 0) {
+        const error = new Error("The amount is too small");
+        error.statusCode = 400;
+        return next(error);
     }
     await Transactions.findByIdAndUpdate(req.params.id, {
         title: title.trim(),
