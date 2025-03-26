@@ -1,5 +1,5 @@
 import express from 'express';
-import { addgoal,getGoals ,updateGoals,deleteGoal ,addSavedAmount,updateSavedAmount,deleteSavedAmount} from '../controllers/savingGoal.controller.js';
+import { addgoal,getGoals ,updateGoals,deleteGoal ,getPayments,addSavedAmount,updateSavedAmount,deleteSavedAmount} from '../controllers/savingGoal.controller.js';
 import isLoggedIn from '../middlewares/isLoggedIn.js';
 import {goalValidation,savedAmountValidation,validationMiddleware} from '../middlewares/validations.js';
 import multer from 'multer';
@@ -17,6 +17,7 @@ router.delete('/:id',isLoggedIn,deleteGoal);
 
 
 // add saved amount
+router.get('/saved-amount/:id',isLoggedIn,getPayments);
 router.post('/saved-amount/:id',isLoggedIn,savedAmountValidation,validationMiddleware,addSavedAmount);
 router.put('/saved-amount/:id/:savedAmountId',isLoggedIn,savedAmountValidation,validationMiddleware,updateSavedAmount);
 router.delete('/saved-amount/:id/:savedAmountId',isLoggedIn,deleteSavedAmount);

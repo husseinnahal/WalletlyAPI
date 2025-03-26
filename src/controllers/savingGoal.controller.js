@@ -111,7 +111,6 @@ const getGoals = asyncHandler(async (req, res, next) => {
     });
 })
 
-
 const updateGoals = asyncHandler(async (req, res, next) => {
     const {  title, amount,unit } = req.body;
     const userId = req.decoded.id; 
@@ -199,76 +198,88 @@ const deleteGoal = asyncHandler(async (req, res, next) => {
 
 // CRUD saving amount
 const addSavedAmount = asyncHandler(async (req, res, next) => {
-    const { amount,unit } = req.body;
+    const { amount, unit } = req.body;
     const userId = req.decoded.id;
 
-        const goal = await SavingGoal.findOne({ _id: req.params.id, userId });
-        if (!goal) {
-            const error = new Error("goal not found");
-            error.statusCode = 400;
-            return next(error);
-        }
+
+    const goal = await SavingGoal.findOne({ _id: req.params.id, userId });
+    if (!goal) {
+        return next(new Error("Goal not found", { statusCode: 400 }));
+    }
 
 
-        let amountInUSD = amount; 
-        if (unit !== "USD") {
-            try {
-                const response = await axios.get(`https://v6.exchangerate-api.com/v6/ba58b0d0ceb524b2f919eac6/latest/USD`);
-                const rates = response.data.conversion_rates; 
-                if (!rates[unit]) {
-                    const error = new Error("Invalid currency unit");
-                    error.statusCode = 400;
-                    return next(error);
-                }
-    
-                const rate = rates[unit]; 
-                amountInUSD = (amount / rate).toFixed(2);
-                amountInUSD = Number(amountInUSD);
-    
-            } catch (error) {
-                console.error("Error fetching exchange rates:", error.message);
-                const errors = new Error("Failed to fetch exchange rates");
-                errors.statusCode = 500;
-                return next(errors);
+    let amountInUSD = amount;
+    if (unit !== "USD") {
+        try {
+            const response = await axios.get("https://v6.exchangerate-api.com/v6/ba58b0d0ceb524b2f919eac6/latest/USD");
+
+            if (!response.data || !response.data.conversion_rates) {
+                return next(new Error("Invalid response from exchange rate API", { statusCode: 500 }));
             }
+
+            const rates = response.data.conversion_rates;
+            if (!rates[unit]) {
+                return next(new Error("Invalid currency unit", { statusCode: 400 }));
+            }
+
+            amountInUSD = Number((amount / rates[unit]).toFixed(2));
+        } catch (error) {
+            console.error("Error fetching exchange rates:", error.message);
+            return next(new Error("Failed to fetch exchange rates", { statusCode: 500 }));
         }
-        if (amountInUSD<= 0) {
-            const error = new Error("The amount is too small");
-            error.statusCode = 400;
-            return next(error);
-        }
+    }
 
-        // add  new saved amount
-        goal.savedAmounts.push({ amount: amountInUSD });
+    if (amountInUSD <= 0) {
+        return next(new Error("The amount is too small", { statusCode: 400 }));
+    }
+    
+    if (amountInUSD > (goal.amount - goal.total)) {
+        return next(new Error("The payment exceeds the remaining amount", { statusCode: 400 }));
+    }
 
-        // Update  total 
-        goal.total = goal.total + amountInUSD;
-        await goal.save();
 
-        res.status(200).json({
-            status: true,
-            message: "Amount added successfully",
-        });
+    goal.savedAmounts.push({ amount: amountInUSD });
 
+
+    goal.total += amountInUSD;
+    await goal.save();
+
+    return res.status(200).json({
+        status: true,
+        message: "Payment added successfully",
+    });
 });
+
+const getPayments = asyncHandler(async (req, res, next) => {
+    const userId = req.decoded.id;
+    const  id = req.params.id;
+
+    const goal = await SavingGoal.findOne({ _id: id, userId }).select("savedAmounts");
+    if (!goal) {
+        return next(new Error("Goal not found", { statusCode: 404 }));
+    }
+
+    res.status(200).json({
+        status: true,
+        data:goal,
+        message: "Payments retrieved successfully",
+    });
+});
+
 
 const updateSavedAmount = asyncHandler(async (req, res, next) => {
     const { amount, unit } = req.body;
     const userId = req.decoded.id;
-    const { id, savedAmountId } = req.params; 
+    const { id, savedAmountId } = req.params;
 
     const goal = await SavingGoal.findOne({ _id: id, userId });
     if (!goal) {
-        const error = new Error("Goal not found");
-        error.statusCode = 404;
-        return next(error);
+        return next(new Error("Goal not found", { statusCode: 404 }));
     }
 
     const savedAmount = goal.savedAmounts.id(savedAmountId);
     if (!savedAmount) {
-        const error = new Error("Saved amount not found");
-        error.statusCode = 404;
-        return next(error);
+        return next(new Error("Saved amount not found", { statusCode: 404 }));
     }
 
     let amountInUSD = amount;
@@ -276,40 +287,39 @@ const updateSavedAmount = asyncHandler(async (req, res, next) => {
         try {
             const response = await axios.get(`https://v6.exchangerate-api.com/v6/ba58b0d0ceb524b2f919eac6/latest/USD`);
             const rates = response.data.conversion_rates;
+            
             if (!rates[unit]) {
-                const error = new Error("Invalid currency unit");
-                error.statusCode = 400;
-                return next(error);
+                return next(new Error("Invalid currency unit", { statusCode: 400 }));
             }
 
             const rate = rates[unit];
-            amountInUSD = (amount / rate).toFixed(2);
-            amountInUSD = Number(amountInUSD);
-
+            amountInUSD = parseFloat((amount / rate).toFixed(2)); 
         } catch (error) {
-            console.error("Error fetching exchange rates:", error.message);
-            const errors = new Error("Failed to fetch exchange rates");
-            errors.statusCode = 500;
-            return next(errors);
+            return next(new Error("Failed to fetch exchange rates", { statusCode: 500 }));
         }
     }
-    if (amountInUSD<= 0) {
-        const error = new Error("The amount is too small");
-        error.statusCode = 400;
-        return next(error);
+
+    if (amountInUSD <= 0) {
+        return next(new Error("The amount is too small", { statusCode: 400 }));
     }
-    // Calculate the difference to update total correctly
+
+    // Calculate the difference
     const difference = amountInUSD - savedAmount.amount;
 
+    if (goal.total + difference > goal.amount) {
+        return next(new Error("The updated payment exceeds the remaining goal amount", { statusCode: 400 }));
+    }
+
     savedAmount.amount = amountInUSD;
-    goal.total = goal.total + difference;
+    goal.total += difference;
     await goal.save();
 
     res.status(200).json({
         status: true,
-        message: "Saved amount updated successfully",
+        message: "Payment updated successfully",
     });
 });
+
 
 const deleteSavedAmount = asyncHandler(async (req, res, next) => {
     const { id, savedAmountId } = req.params; 
@@ -344,4 +354,4 @@ const deleteSavedAmount = asyncHandler(async (req, res, next) => {
 
 
 
-export { addgoal ,getGoals,updateGoals,deleteGoal ,addSavedAmount ,updateSavedAmount ,deleteSavedAmount};
+export { addgoal ,getGoals,updateGoals,deleteGoal ,addSavedAmount ,updateSavedAmount ,deleteSavedAmount,getPayments};
