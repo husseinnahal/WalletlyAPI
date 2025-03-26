@@ -204,7 +204,9 @@ const addSavedAmount = asyncHandler(async (req, res, next) => {
 
     const goal = await SavingGoal.findOne({ _id: req.params.id, userId });
     if (!goal) {
-        return next(new Error("Goal not found", { statusCode: 400 }));
+        const error = new Error("Goal not found");
+        error.statusCode = 400;
+        return next(error);
     }
 
 
@@ -214,27 +216,34 @@ const addSavedAmount = asyncHandler(async (req, res, next) => {
             const response = await axios.get("https://v6.exchangerate-api.com/v6/ba58b0d0ceb524b2f919eac6/latest/USD");
 
             if (!response.data || !response.data.conversion_rates) {
-                return next(new Error("Invalid response from exchange rate API", { statusCode: 500 }));
+                const error = new Error("Invalid response from exchange rate API");
+                error.statusCode = 500;
+                return next(error);
             }
 
             const rates = response.data.conversion_rates;
             if (!rates[unit]) {
-                return next(new Error("Invalid currency unit", { statusCode: 400 }));
+                const error = new Error("Invalid currency unit");
+                error.statusCode = 400;
+                return next(error);
             }
 
             amountInUSD = Number((amount / rates[unit]).toFixed(2));
         } catch (error) {
-            console.error("Error fetching exchange rates:", error.message);
             return next(new Error("Failed to fetch exchange rates", { statusCode: 500 }));
         }
     }
 
     if (amountInUSD <= 0) {
-        return next(new Error("The amount is too small", { statusCode: 400 }));
+        const error = new Error("The amount is too small");
+        error.statusCode = 400;
+        return next(error);
     }
     
     if (amountInUSD > (goal.amount - goal.total)) {
-        return next(new Error("The payment exceeds the remaining amount", { statusCode: 400 }));
+        const error = new Error("The payment exceeds the remaining amount");
+        error.statusCode = 400;
+        return next(error);
     }
 
 
@@ -254,14 +263,16 @@ const getPayments = asyncHandler(async (req, res, next) => {
     const userId = req.decoded.id;
     const  id = req.params.id;
 
-    const goal = await SavingGoal.findOne({ _id: id, userId }).select("savedAmounts");
+    const goal = await SavingGoal.findOne({ _id: id, userId });
     if (!goal) {
-        return next(new Error("Goal not found", { statusCode: 404 }));
+        const error = new Error("Goal not found");
+        error.statusCode = 404;
+        return next(error);
     }
 
     res.status(200).json({
         status: true,
-        data:goal,
+        data:goal.savedAmounts,
         message: "Payments retrieved successfully",
     });
 });
@@ -274,12 +285,16 @@ const updateSavedAmount = asyncHandler(async (req, res, next) => {
 
     const goal = await SavingGoal.findOne({ _id: id, userId });
     if (!goal) {
-        return next(new Error("Goal not found", { statusCode: 404 }));
+        const error = new Error("Goal not found");
+        error.statusCode = 404;
+        return next(error);
     }
 
     const savedAmount = goal.savedAmounts.id(savedAmountId);
     if (!savedAmount) {
-        return next(new Error("Saved amount not found", { statusCode: 404 }));
+        const error = new Error("Saved amount not found");
+        error.statusCode = 404;
+        return next(error);
     }
 
     let amountInUSD = amount;
@@ -289,7 +304,9 @@ const updateSavedAmount = asyncHandler(async (req, res, next) => {
             const rates = response.data.conversion_rates;
             
             if (!rates[unit]) {
-                return next(new Error("Invalid currency unit", { statusCode: 400 }));
+                const error = new Error("Invalid currency unit");
+                error.statusCode = 400;
+                return next(error);
             }
 
             const rate = rates[unit];
@@ -300,14 +317,18 @@ const updateSavedAmount = asyncHandler(async (req, res, next) => {
     }
 
     if (amountInUSD <= 0) {
-        return next(new Error("The amount is too small", { statusCode: 400 }));
+        const error = new Error("The amount is too small");
+        error.statusCode = 400;
+        return next(error);
     }
 
     // Calculate the difference
     const difference = amountInUSD - savedAmount.amount;
 
     if (goal.total + difference > goal.amount) {
-        return next(new Error("The updated payment exceeds the remaining goal amount", { statusCode: 400 }));
+        const error = new Error("The updated payment exceeds the remaining goal amount");
+        error.statusCode = 400;
+        return next(error);
     }
 
     savedAmount.amount = amountInUSD;
