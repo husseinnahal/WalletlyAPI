@@ -17,8 +17,8 @@ const addTransaction = asyncHandler(async (req, res, next) => {
     let amountInUSD = amount; 
     if (unit !== "USD") {
         try {
-            const response = await axios.get(`https://v6.exchangerate-api.com/v6/ba58b0d0ceb524b2f919eac6/latest/USD`);
-            const rates = response.data.conversion_rates; // Get  rates
+            const response = await axios.get(`https://open.er-api.com/v6/latest/USD`);
+            const rates = response.data.rates; // Get  rates
             // unit like "used lbp eur ..."
             if (!rates[unit]) {
                 const error = new Error("Invalid currency unit");
@@ -140,8 +140,8 @@ const editTransaction = asyncHandler(async (req, res, next) => {
     let amountInUSD = amount;
     if (unit !== "USD") {
         try {
-            const response = await axios.get(`https://v6.exchangerate-api.com/v6/ba58b0d0ceb524b2f919eac6/latest/USD`);
-            const rates = response.data.conversion_rates;
+            const response = await axios.get(`https://open.er-api.com/v6/latest/USD`);
+            const rates = response.data.rates;
 
             if (!rates[unit]) {
                     const error = new Error("Invalid currency unit");

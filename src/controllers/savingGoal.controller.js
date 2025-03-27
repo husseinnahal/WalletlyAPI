@@ -53,8 +53,8 @@ const addgoal = asyncHandler(async (req, res, next) => {
     let amountInUSD = amount; 
     if (unit !== "USD") {
         try {
-            const response = await axios.get(`https://v6.exchangerate-api.com/v6/ba58b0d0ceb524b2f919eac6/latest/USD`);
-            const rates = response.data.conversion_rates; 
+            const response = await axios.get(`https://open.er-api.com/v6/latest/USD`);
+            const rates = response.data.rates; 
             if (!rates[unit]) {
                 const error = new Error("Invalid currency unit");
                 error.statusCode = 400;
@@ -141,8 +141,8 @@ const updateGoals = asyncHandler(async (req, res, next) => {
     let amountInUSD = amount;
     if (unit !== "USD") {
         try {
-            const response = await axios.get(`https://v6.exchangerate-api.com/v6/ba58b0d0ceb524b2f919eac6/latest/USD`);
-            const rates = response.data.conversion_rates;
+            const response = await axios.get(`https://open.er-api.com/v6/latest/USD`);
+            const rates = response.data.rates;
 
             if (!rates[unit]) {
                     const error = new Error("Invalid currency unit");
@@ -213,15 +213,15 @@ const addSavedAmount = asyncHandler(async (req, res, next) => {
     let amountInUSD = amount;
     if (unit !== "USD") {
         try {
-            const response = await axios.get("https://v6.exchangerate-api.com/v6/ba58b0d0ceb524b2f919eac6/latest/USD");
+            const response = await axios.get("https://open.er-api.com/v6/latest/USD");
 
-            if (!response.data || !response.data.conversion_rates) {
+            if (!response.data || !response.data.rates) {
                 const error = new Error("Invalid response from exchange rate API");
                 error.statusCode = 500;
                 return next(error);
             }
 
-            const rates = response.data.conversion_rates;
+            const rates = response.data.rates;
             if (!rates[unit]) {
                 const error = new Error("Invalid currency unit");
                 error.statusCode = 400;
@@ -300,8 +300,8 @@ const updateSavedAmount = asyncHandler(async (req, res, next) => {
     let amountInUSD = amount;
     if (unit !== "USD") {
         try {
-            const response = await axios.get(`https://v6.exchangerate-api.com/v6/ba58b0d0ceb524b2f919eac6/latest/USD`);
-            const rates = response.data.conversion_rates;
+            const response = await axios.get(`https://open.er-api.com/v6/latest/USD`);
+            const rates =response.data.rates;
             
             if (!rates[unit]) {
                 const error = new Error("Invalid currency unit");
