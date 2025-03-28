@@ -202,6 +202,23 @@ const addpaid = asyncHandler(async (req, res, next) => {
         });
 
 });
+const getPayments = asyncHandler(async (req, res, next) => {
+    const userId = req.decoded.id;
+    const  id = req.params.id;
+
+    const debt = await Debt.findOne({ _id: id, userId }).sort({ date: -1 });
+    if (!debt) {
+        const error = new Error("debt not found");
+        error.statusCode = 404;
+        return next(error);
+    }
+
+    res.status(200).json({
+        status: true,
+        data:goal.savedAmounts,
+        message: "Payments retrieved successfully",
+    });
+});
 
 const updatepaid = asyncHandler(async (req, res, next) => {
     const { amount, unit } = req.body;
@@ -302,4 +319,4 @@ const deletepaiddebt = asyncHandler(async (req, res, next) => {
 
 
 
-export { addDebt ,getdebts,updateDebt,deleteDebt,addpaid,updatepaid,deletepaiddebt };
+export { addDebt ,getdebts,updateDebt,deleteDebt,addpaid,updatepaid,deletepaiddebt ,getPayments };

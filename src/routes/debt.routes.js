@@ -1,5 +1,5 @@
 import express from 'express';
-import { addDebt ,getdebts,updateDebt,deleteDebt ,addpaid,updatepaid,deletepaiddebt} from '../controllers/debt.controller.js';
+import { addDebt ,getdebts,updateDebt,deleteDebt ,addpaid,updatepaid,deletepaiddebt,getPayments} from '../controllers/debt.controller.js';
 import isLoggedIn from '../middlewares/isLoggedIn.js';
 import {debtValidation,savedAmountValidation,validationMiddleware } from '../middlewares/validations.js';
 
@@ -16,6 +16,7 @@ router.delete('/:id',isLoggedIn,deleteDebt);
 
 
 // add paid amount
+router.get('/paid/:id',isLoggedIn,savedAmountValidation,validationMiddleware,getPayments);
 router.post('/paid/:id',isLoggedIn,savedAmountValidation,validationMiddleware,addpaid);
 router.put('/paid/:id/:paidAmountId',isLoggedIn,savedAmountValidation,validationMiddleware,updatepaid);
 router.delete('/paid/:id/:paidAmountId',isLoggedIn,deletepaiddebt);
