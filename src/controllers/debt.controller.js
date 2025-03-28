@@ -177,7 +177,17 @@ const addpaid = asyncHandler(async (req, res, next) => {
                 return next(errors);
             }
         }
-
+        if (amountInUSD <= 0) {
+            const error = new Error("The amount is too small");
+            error.statusCode = 400;
+            return next(error);
+        }
+        
+        if (amountInUSD > (debt.amount - debt.total)) {
+            const error = new Error("The payment exceeds the remaining amount");
+            error.statusCode = 400;
+            return next(error);
+        }
 
         // add  new paid amount
         debt.paidDebt.push({ amount: amountInUSD });
@@ -234,9 +244,20 @@ const updatepaid = asyncHandler(async (req, res, next) => {
             return next(errors);
         }
     }
+    if (amountInUSD <= 0) {
+        const error = new Error("The amount is too small");
+        error.statusCode = 400;
+        return next(error);
+    }
 
     // Calculate the difference to update total correctly
     const difference = amountInUSD - debtpaid.amount;
+
+    if (debt.total + difference > debt.amount) {
+        const error = new Error("The updated payment exceeds the remaining debt amount");
+        error.statusCode = 400;
+        return next(error);
+    }
 
     debtpaid.amount = amountInUSD;
     debt.total = debt.total + difference;

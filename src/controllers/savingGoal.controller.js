@@ -263,7 +263,7 @@ const getPayments = asyncHandler(async (req, res, next) => {
     const userId = req.decoded.id;
     const  id = req.params.id;
 
-    const goal = await SavingGoal.findOne({ _id: id, userId });
+    const goal = await SavingGoal.findOne({ _id: id, userId }).sort({ date: -1 });
     if (!goal) {
         const error = new Error("Goal not found");
         error.statusCode = 404;
