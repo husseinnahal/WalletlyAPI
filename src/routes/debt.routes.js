@@ -16,7 +16,7 @@ router.delete('/:id',isLoggedIn,deleteDebt);
 
 
 // add paid amount
-router.get('/paid/:id',isLoggedIn,savedAmountValidation,validationMiddleware,getPayments);
+router.get('/paid/:id',isLoggedIn,getPayments);
 router.post('/paid/:id',isLoggedIn,savedAmountValidation,validationMiddleware,addpaid);
 router.put('/paid/:id/:paidAmountId',isLoggedIn,savedAmountValidation,validationMiddleware,updatepaid);
 router.delete('/paid/:id/:paidAmountId',isLoggedIn,deletepaiddebt);
