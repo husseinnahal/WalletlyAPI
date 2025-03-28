@@ -263,16 +263,17 @@ const getPayments = asyncHandler(async (req, res, next) => {
     const userId = req.decoded.id;
     const  id = req.params.id;
 
-    const goal = await SavingGoal.findOne({ _id: id, userId }).sort({ date: -1 });
+    const goal = await SavingGoal.findOne({ _id: id, userId });
     if (!goal) {
         const error = new Error("Goal not found");
         error.statusCode = 404;
         return next(error);
     }
+    const sortedPaid = goal.savedAmounts.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     res.status(200).json({
         status: true,
-        data:goal.savedAmounts,
+        data:sortedPaid,
         message: "Payments retrieved successfully",
     });
 });

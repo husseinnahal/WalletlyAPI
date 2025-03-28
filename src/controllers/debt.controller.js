@@ -204,18 +204,19 @@ const addpaid = asyncHandler(async (req, res, next) => {
 });
 const getPayments = asyncHandler(async (req, res, next) => {
     const userId = req.decoded.id;
-    const  id = req.params.id;
+    const id = req.params.id;
 
-    const debt = await Debt.findOne({ _id: id, userId }).sort({ date: -1 });
+    const debt = await Debt.findOne({ _id: id, userId });
     if (!debt) {
-        const error = new Error("debt not found");
+        const error = new Error("Debt not found");
         error.statusCode = 404;
         return next(error);
     }
+    const sortedPaidDebt = debt.paidDebt.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     res.status(200).json({
         status: true,
-        data:goal.savedAmounts,
+        data: sortedPaidDebt,
         message: "Payments retrieved successfully",
     });
 });
