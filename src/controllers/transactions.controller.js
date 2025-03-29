@@ -247,89 +247,67 @@ const getMonthlyStats = asyncHandler(async (req, res, next) => {
     });
 });
 
+
 // get transaction categories
-// const getTransactionCategories = asyncHandler(async (req, res, next) => {
-//     const userId = req.decoded.id; 
-    
-//     // const { startDate, endDate } = req.query; 
-//     const { type } = req.query; // Optional filter for type (income/expense)
+const getTransactionCategories = asyncHandler(async (req, res, next) => {
+    const userId = req.decoded.id; 
+    const { type } = req.query; 
 
-//     try {
-//         // Match the criteria based on user ID, type (income/expense), and date range
-//         let matchCriteria = { userId };
-        
-//         if (type && ["expense", "income"].includes(type)) {
-//             matchCriteria.type = type; // Filter by type if provided
-//         }
+    try {
+        let matchCriteria = { userId };
 
-//         // // Date range filter
-//         // if (startDate && endDate) {
-//         //     matchCriteria.createdAt = {
-//         //         $gte: new Date(startDate),
-//         //         $lte: new Date(endDate),
-//         //     };
-//         // }
+        if (type && ["expense", "income"].includes(type)) {
+            matchCriteria.type = type;
+        }
 
-//         // Aggregate transactions by category
-//         const result = await Transactions.aggregate([
-//             { $match: matchCriteria }, // Apply match filter
+        const result = await Transactions.aggregate([
+            { $match: matchCriteria },
 
-//             {
-//                 $lookup: {
-//                     from: "Category", // Lookup category collection
-//                     localField: "categoryId", // Reference to categoryId in Transactions
-//                     foreignField: "_id", // Match it with _id in Category
-//                     as: "categoryDetails", // Add category details
-//                 }
-//             },
+            {
+                $lookup: {
+                    from: "categories", 
+                    localField: "categoryId",
+                    foreignField: "_id",
+                    as: "categoryDetails",
+                }
+            },
 
-//             { $unwind: "$categoryDetails" }, // Flatten category details
+            { $unwind: { path: "$categoryDetails", preserveNullAndEmptyArrays: true } },
 
-//             {
-//                 $group: {
-//                     _id: "$categoryDetails.name", // Group by category name
-//                     totalIncome: {
-//                         $sum: {
-//                             $cond: [{ $eq: ["$type", "income"] }, "$amount", 0]
-//                         } // Sum only if type is 'income'
-//                     },
-//                     totalExpense: {
-//                         $sum: {
-//                             $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0]
-//                         } // Sum only if type is 'expense'
-//                     }
-//                 }
-//             },
+            {
+                $group: {
+                    _id: "$categoryDetails.name",
+                    totalIncome: {
+                        $sum: { $cond: [{ $eq: ["$type", "income"] }, "$amount", 0] }
+                    },
+                    totalExpense: {
+                        $sum: { $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0] }
+                    }
+                }
+            },
 
-//             {
-//                 $sort: { totalIncome: -1, totalExpense: -1 } // Sort by total income and expense
-//             }
-//         ]);
+            { $sort: { totalIncome: -1, totalExpense: -1 } }
+        ]);
 
-//         // If no transactions found, send an empty response
-//         if (result.length === 0) {
-//             return res.status(200).json({
-//                 status: true,
-//                 message: "No transactions found for the given criteria"
-//             });
-//         }
+        if (result.length === 0) {
+            return res.status(200).json({
+                status: true,
+                message: "No transactions found for the given criteria"
+            });
+        }
 
-//         // Send the aggregated result
-//         res.status(200).json({
-//             status: true,
-//             categories: result // List of categories with total income and expense
-//         });
+        res.status(200).json({
+            status: true,
+            categories: result
+        });
 
-//     } catch (error) {
-//         console.error(error);
-//         const err = new Error("Failed to fetch transaction categories breakdown");
-//         err.statusCode = 500;
-//         return next(err);
-//     }
-// });
+    } catch (error) {
+        console.error(error);
+        next(new Error("Failed to fetch transaction categories breakdown"));
+    }
+});
 
 
 
 
-
-export { addTransaction,getTransactions,editTransaction,delTransaction ,getMonthlyStats  };
+export { addTransaction,getTransactions,editTransaction,delTransaction ,getMonthlyStats ,getTransactionCategories };

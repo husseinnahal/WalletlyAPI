@@ -1,5 +1,5 @@
 import express from 'express';
-import { addTransaction,getTransactions,editTransaction,delTransaction ,getMonthlyStats } from '../controllers/transactions.controller.js';
+import { addTransaction,getTransactions,editTransaction,delTransaction ,getMonthlyStats ,getTransactionCategories} from '../controllers/transactions.controller.js';
 import isLoggedIn from '../middlewares/isLoggedIn.js';
 import {TranValidation,validationMiddleware} from '../middlewares/validations.js';
 
@@ -14,6 +14,6 @@ router.delete('/:id',isLoggedIn,delTransaction);
 
 
 router.get("/monthlystats",isLoggedIn, getMonthlyStats);
-// router.get("/tranbyCat",isLoggedIn, getTransactionCategories);
+router.get("/tranbyCat",isLoggedIn, getTransactionCategories);
 
 export default router;
