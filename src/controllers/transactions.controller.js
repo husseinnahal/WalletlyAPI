@@ -2,6 +2,7 @@ import Transactions from '../models/transactions.js';
 import Cat from '../models/category.js';
 import asyncHandler from "express-async-handler";
 import axios from 'axios';
+import mongoose from 'mongoose';
 
 
 const addTransaction = asyncHandler(async (req, res, next) => {
@@ -250,11 +251,11 @@ const getMonthlyStats = asyncHandler(async (req, res, next) => {
 
 // get transaction categories
 const getTransactionCategories = asyncHandler(async (req, res, next) => {
-    const userId = req.decoded.id; 
-    const { type } = req.query; 
+    const userId = req.decoded.id;
+    const { type } = req.query;
 
     try {
-        let matchCriteria = { userId };
+        let matchCriteria = { userId: new mongoose.Types.ObjectId(userId) };
 
         if (type && ["expense", "income"].includes(type)) {
             matchCriteria.type = type;
@@ -262,18 +263,15 @@ const getTransactionCategories = asyncHandler(async (req, res, next) => {
 
         const result = await Transactions.aggregate([
             { $match: matchCriteria },
-
             {
                 $lookup: {
-                    from: "categories", 
+                    from: "categories", // Ensure this matches your collection name exactly
                     localField: "categoryId",
                     foreignField: "_id",
                     as: "categoryDetails",
                 }
             },
-
             { $unwind: { path: "$categoryDetails", preserveNullAndEmptyArrays: true } },
-
             {
                 $group: {
                     _id: "$categoryDetails.name",
@@ -285,7 +283,6 @@ const getTransactionCategories = asyncHandler(async (req, res, next) => {
                     }
                 }
             },
-
             { $sort: { totalIncome: -1, totalExpense: -1 } }
         ]);
 
@@ -302,7 +299,7 @@ const getTransactionCategories = asyncHandler(async (req, res, next) => {
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("erorrrrrrr",error);
         next(new Error("Failed to fetch transaction categories breakdown"));
     }
 });
